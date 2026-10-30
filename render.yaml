@@ -14,10 +14,14 @@ services:
         value: production
       - key: APP_DEBUG
         value: "false"
+      - key: APP_URL
+        value: https://codebar-manager-backend.onrender.com
+      - key: LOG_CHANNEL
+        value: stderr
       - key: DB_CONNECTION
         value: pgsql
       - key: DATABASE_URL
-        value: postgres://avnadmin:AVNS_JOSxu6b5cTAYSwoX5Lo@pg-20e4e9c1-codebar-postgres.h.aivencloud.com:15868/defaultdb?sslmode=require
+        sync: false
       - key: DB_SSLMODE
         value: require
       - key: AUTO_MIGRATE
