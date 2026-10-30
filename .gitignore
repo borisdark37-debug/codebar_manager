@@ -25,4 +25,6 @@ codebar_manager_app/android/local.properties
 Thumbs.db
 *.tmp
 *.log
+*.isar-lck
+*.isar
 CON.svg
