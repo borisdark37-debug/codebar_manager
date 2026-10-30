@@ -1,4 +1,4 @@
-import 'package:codebar_manager_app/features/products/presentation/Widgets/empty_product_view.dart';
+import 'package:codebar_manager_app/features/products/presentation/widgets/empty_product_view.dart';
 import 'package:codebar_manager_app/features/products/providers/product_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
