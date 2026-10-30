@@ -157,7 +157,9 @@ void main() {
   late UserRepository userRepo;
 
   setUpAll(() async {
-    await Isar.initializeIsarCore(download: true);
+    try {
+      await Isar.initializeIsarCore(download: true);
+    } catch (_) {}
   });
 
   setUp(() async {

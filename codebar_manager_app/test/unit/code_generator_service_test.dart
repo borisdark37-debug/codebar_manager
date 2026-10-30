@@ -10,7 +10,9 @@ void main() {
   late CodeGeneratorService codeGen;
 
   setUpAll(() async {
-    await Isar.initializeIsarCore(download: false);
+    try {
+      await Isar.initializeIsarCore(download: true);
+    } catch (_) {}
   });
 
   setUp(() async {
