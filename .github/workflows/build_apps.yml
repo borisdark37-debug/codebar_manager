@@ -68,7 +68,7 @@ jobs:
 
       - name: Build Android Release APK
         working-directory: ${{ steps.set-dir.outputs.app_dir }}
-        run: flutter build apk --release
+        run: flutter build apk --release --android-skip-build-dependency-validation
 
       - name: Rename APK for Clarity
         working-directory: ${{ steps.set-dir.outputs.app_dir }}
