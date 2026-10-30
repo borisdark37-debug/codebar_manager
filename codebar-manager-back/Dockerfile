@@ -2,7 +2,7 @@
 # Dockerfile Production Multi-Plateforme - CodeBar Manager Backend (Laravel 11)
 # Optimisé pour Aiven PostgreSQL, Render.com, Koyeb, Docker Compose & VPS
 # ==============================================================================
-FROM php:8.3-fpm-alpine
+FROM php:8.4-fpm-alpine
 
 LABEL maintainer="CodeBar Manager Team"
 LABEL description="Production Docker image for CodeBar Manager Laravel Backend"
@@ -55,13 +55,13 @@ WORKDIR /var/www/html
 
 # Optimisation du cache Docker pour Composer
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --no-interaction
+RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --no-interaction --ignore-platform-reqs
 
 # Copie intégrale de l'application
 COPY . .
 
 # Finalisation de l'autoloader optimisé
-RUN composer dump-autoload --optimize --no-dev --no-interaction
+RUN composer dump-autoload --optimize --no-dev --no-interaction --ignore-platform-reqs
 
 # Configurations Nginx, Supervisor et Entrypoint
 COPY docker/nginx.conf /etc/nginx/nginx.conf
