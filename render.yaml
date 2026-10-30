@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: codebar-manager-backend
+    runtime: docker
+    dockerfilePath: ./codebar-manager-back/Dockerfile
+    dockerContext: ./codebar-manager-back
+    plan: free
+    region: frankfurt
+    healthCheckPath: /api/health
+    envVars:
+      - key: APP_NAME
+        value: CodeBarManager
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DATABASE_URL
+        value: postgres://avnadmin:AVNS_JOSxu6b5cTAYSwoX5Lo@pg-20e4e9c1-codebar-postgres.h.aivencloud.com:15868/defaultdb?sslmode=require
+      - key: DB_SSLMODE
+        value: require
+      - key: AUTO_MIGRATE
+        value: "true"
+      - key: APP_KEY
+        generateValue: true
