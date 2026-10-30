@@ -1,0 +1,28 @@
+# Root Gitignore for CodeBar Manager Full
+
+# Laravel
+codebar-manager-back/.env
+codebar-manager-back/vendor/
+codebar-manager-back/storage/*.key
+codebar-manager-back/storage/logs/*.log
+codebar-manager-back/storage/framework/cache/*
+codebar-manager-back/storage/framework/sessions/*
+codebar-manager-back/storage/framework/views/*
+codebar-manager-back/.phpunit.result.cache
+
+# Flutter
+codebar_manager_app/.dart_tool/
+codebar_manager_app/build/
+codebar_manager_app/.flutter-plugins
+codebar_manager_app/.flutter-plugins-dependencies
+codebar_manager_app/.packages
+codebar_manager_app/windows/flutter/ephemeral/
+codebar_manager_app/android/.gradle/
+codebar_manager_app/android/local.properties
+
+# OS & Temp
+.DS_Store
+Thumbs.db
+*.tmp
+*.log
+CON.svg

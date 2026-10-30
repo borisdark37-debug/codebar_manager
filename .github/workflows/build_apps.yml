@@ -1,0 +1,171 @@
+name: Build & Package Flutter Apps (Android & Windows)
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  # --------------------------------------------------------------------------
+  # JOB 1 : Compilation Android APK Release
+  # --------------------------------------------------------------------------
+  build-android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Determine Project Directory
+        id: set-dir
+        run: |
+          if [ -f "codebar_manager_app/pubspec.yaml" ]; then
+            echo "app_dir=codebar_manager_app" >> $GITHUB_OUTPUT
+          else
+            echo "app_dir=." >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Java (JDK 17)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Verify Flutter & Environment
+        run: flutter --version
+
+      - name: Install Dependencies
+        working-directory: ${{ steps.set-dir.outputs.app_dir }}
+        run: flutter pub get
+
+      - name: Run Unit & Integration Tests
+        working-directory: ${{ steps.set-dir.outputs.app_dir }}
+        run: flutter test
+
+      - name: Build Android Release APK
+        working-directory: ${{ steps.set-dir.outputs.app_dir }}
+        run: flutter build apk --release
+
+      - name: Rename APK for Clarity
+        working-directory: ${{ steps.set-dir.outputs.app_dir }}
+        run: |
+          mkdir -p dist
+          cp build/app/outputs/flutter-apk/app-release.apk dist/codebar_manager_app_release.apk
+
+      - name: Upload Android APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: codebar_manager_android_apk
+          path: ${{ steps.set-dir.outputs.app_dir }}/dist/codebar_manager_app_release.apk
+          if-no-files-found: error
+
+  # --------------------------------------------------------------------------
+  # JOB 2 : Compilation Windows .EXE & Bundling DLLs en ZIP
+  # --------------------------------------------------------------------------
+  build-windows:
+    name: Build Windows Release (.exe + DLLs)
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Determine Project Directory
+        id: set-dir
+        shell: pwsh
+        run: |
+          if (Test-Path "codebar_manager_app/pubspec.yaml") {
+            "app_dir=codebar_manager_app" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          } else {
+            "app_dir=." | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          }
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Enable Windows Desktop Support
+        run: flutter config --enable-windows-desktop
+
+      - name: Install Dependencies
+        working-directory: ${{ steps.set-dir.outputs.app_dir }}
+        run: flutter pub get
+
+      - name: Run Tests
+        working-directory: ${{ steps.set-dir.outputs.app_dir }}
+        run: flutter test
+
+      - name: Build Windows Executable
+        working-directory: ${{ steps.set-dir.outputs.app_dir }}
+        run: flutter build windows --release
+
+      - name: Package Windows Bundle into ZIP
+        shell: pwsh
+        run: |
+          $appDir = "${{ steps.set-dir.outputs.app_dir }}"
+          $releasePath = "$appDir/build/windows/x64/runner/Release"
+          if (-not (Test-Path $releasePath)) {
+            $releasePath = "$appDir/build/windows/runner/Release"
+          }
+          $resolved = (Resolve-Path $releasePath).Path
+          Write-Host "Archivage du dossier release : $resolved"
+          Compress-Archive -Path "$resolved\*" -DestinationPath "codebar_manager_windows.zip" -Force
+
+      - name: Upload Windows Bundle Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: codebar_manager_windows_exe
+          path: codebar_manager_windows.zip
+          if-no-files-found: error
+
+  # --------------------------------------------------------------------------
+  # JOB 3 : Publication Automatique de la Release GitHub (sur tag git v*)
+  # --------------------------------------------------------------------------
+  create-release:
+    name: Publish GitHub Release
+    needs: [build-android, build-windows]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download Android Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: codebar_manager_android_apk
+          path: release_artifacts/
+
+      - name: Download Windows Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: codebar_manager_windows_exe
+          path: release_artifacts/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release_artifacts/codebar_manager_app_release.apk
+            release_artifacts/codebar_manager_windows.zip
+          draft: false
+          prerelease: false
+          generate_release_notes: true

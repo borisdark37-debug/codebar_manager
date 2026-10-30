@@ -1,0 +1,13 @@
+J'ai d'autres ajustements à effectuer.
+
+Au niveau des produits présent dans la corbeille, il faudrait y ajouter un bouton supprimé définitivement et faire en sorte que leur numéros ni identifiants ne soit plus attribués aux futur produit qu'on ajoutera. 
+
+Il faudrait qu'au moment d'exporter un code on offre la possibilité de choisir entre un code barre ou un QR code et une fois le choix effectué on l'exporte. 
+
+Il serait aussi nécessaire d'ajouter la possibilité d'enregistrer un utilisateur en local si le serveur ne repond pas ainsi quand le serveur sera actif, le super admin ou l'admin pourra activer la synchronisation des utilisateurs. Il devrait aussi avoir une page liste des utilisateurs ou l'on pourra affiché tous les utilisateurs et leur état de synchronisation et devant chaque user un bouton synchronisé et tout en haut de la page un bouton tout synchronisé les utilisateur; Une page détail qui affiche les détails de l'utilisateur, son état de synchronisation et la personne l'ayant ajouter, cela ne concerne pas le super admin. Si lors du premier enregistrement du super admin ces données ne se sychronisent pas, il n'aura qu'à aller dans la liste des utilisateurs et synchronisé ses données lui meme.
+
+Ajouter aussi la possibilité au super admin de désactivé les autres utilisateurs et au bout de 30 jours les supprimés complètement du systeme.
+
+Il faudrait aussi une page profil utilisateur.
+
+La possibilité de passer du mode sombre au mode claire. 

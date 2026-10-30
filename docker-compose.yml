@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./codebar-manager-back
+      dockerfile: Dockerfile
+    container_name: codebar_manager_backend
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8080}:${PORT:-8080}"
+    env_file:
+      - ./codebar-manager-back/.env
+    environment:
+      APP_NAME: "CodeBar Manager"
+      APP_ENV: "${APP_ENV:-production}"
+      APP_DEBUG: "${APP_DEBUG:-false}"
+      APP_URL: "${APP_URL:-http://localhost:8080}"
+      
+      # Configuration Aiven PostgreSQL
+      DB_CONNECTION: "${DB_CONNECTION:-pgsql}"
+      DB_SSLMODE: "${DB_SSLMODE:-require}"
+      AUTO_MIGRATE: "true"
+    volumes:
+      - backend_storage:/var/www/html/storage
+
+volumes:
+  backend_storage:
+    driver: local
