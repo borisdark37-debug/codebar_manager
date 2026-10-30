@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.codebar.codebar_manager_app"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -27,7 +27,7 @@ android {
     defaultConfig {
         applicationId = "com.codebar.codebar_manager_app"
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

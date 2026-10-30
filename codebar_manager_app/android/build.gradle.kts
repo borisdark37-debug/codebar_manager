@@ -15,15 +15,16 @@ subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
-subprojects {
-    project.evaluationDependsOn(":app")
-}
-
-tasks.register<Delete>("clean") {
-    delete(rootProject.layout.buildDirectory)
-}
 
 subprojects {
+    project.afterEvaluate {
+        if (project.hasProperty("android")) {
+            val androidExtension = project.extensions.findByName("android")
+            if (androidExtension is com.android.build.gradle.BaseExtension) {
+                androidExtension.compileSdkVersion(36)
+            }
+        }
+    }
     val currentProject = this
     if (currentProject.name == "isar_flutter_libs") {
         currentProject.plugins.withId("com.android.library") {
@@ -32,4 +33,8 @@ subprojects {
             }
         }
     }
+}
+
+tasks.register<Delete>("clean") {
+    delete(rootProject.layout.buildDirectory)
 }
