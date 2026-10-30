@@ -3,19 +3,17 @@ import 'package:flutter/foundation.dart';
 class ApiConfig {
   ApiConfig._();
 
+  /// URL de l'API de production hébergée sur Render Cloud
+  static const String liveBaseUrl = 'https://codebar-manager-backend.onrender.com/api';
+
   static String get baseUrl {
     const envUrl = String.fromEnvironment('API_BASE_URL');
     if (envUrl.isNotEmpty) {
       return envUrl;
     }
 
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      // Émulateur Android standard : 10.0.2.2 pointe vers le localhost de la machine hôte
-      return 'http://10.0.2.2:8000/api';
-    }
-
-    // Application Windows / Desktop / Web
-    return 'http://127.0.0.1:8000/api';
+    // Backend Render en production par défaut (accessible depuis Android, iOS, Windows, Mac, Linux et Web)
+    return liveBaseUrl;
   }
 
   /// Temps de réponse de 30 secondes pour toutes les requêtes (CRUD, sync, logs).
