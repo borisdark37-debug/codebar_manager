@@ -229,19 +229,21 @@ void main() {
       expect(mockApi.lastOptions?.receiveTimeout, const Duration(seconds: 20));
     });
 
-    test('Default Super Admins: ensureSuperAdminExists seeds both superadmin1 and superadmin2 in local Isar', () async {
+    test('Default Super Admins: ensureSuperAdminExists seeds both Capucine Bolo and Boris Dark in local Isar', () async {
       final sa = await userRepo.ensureSuperAdminExists();
       expect(sa, isNotNull);
 
-      final sa1 = await isar.appUsers.filter().emailEqualTo('superadmin1@codebar.local').findFirst();
+      final sa1 = await isar.appUsers.filter().emailEqualTo('capucine@gmail.com').findFirst();
       expect(sa1, isNotNull);
       expect(sa1?.role, 'super_admin');
       expect(sa1?.password, 'Password123!');
+      expect(sa1?.name, 'Capucine Bolo');
 
-      final sa2 = await isar.appUsers.filter().emailEqualTo('superadmin2@codebar.local').findFirst();
+      final sa2 = await isar.appUsers.filter().emailEqualTo('borisdark37@gmail.com').findFirst();
       expect(sa2, isNotNull);
       expect(sa2?.role, 'super_admin');
       expect(sa2?.password, 'Password123!');
+      expect(sa2?.name, 'Boris Dark');
     });
 
     test('Online Password Reset: Super admin resets password online with server update', () async {

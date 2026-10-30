@@ -165,25 +165,25 @@ class ApiTest extends TestCase
         $this->seed(\Database\Seeders\DatabaseSeeder::class);
 
         $this->assertDatabaseHas('users', [
-            'email' => 'superadmin1@codebar.local',
+            'email' => 'capucine@gmail.com',
             'role' => User::ROLE_SUPER_ADMIN,
         ]);
 
         $this->assertDatabaseHas('users', [
-            'email' => 'superadmin2@codebar.local',
+            'email' => 'borisdark37@gmail.com',
             'role' => User::ROLE_SUPER_ADMIN,
         ]);
 
-        // Vérifier la connexion avec superadmin1
+        // Vérifier la connexion avec Capucine Bolo
         $login1 = $this->postJson('/api/login', [
-            'email' => 'superadmin1@codebar.local',
+            'email' => 'capucine@gmail.com',
             'password' => 'Password123!',
         ]);
         $login1->assertOk()->assertJsonStructure(['token', 'user']);
 
-        // Vérifier la connexion avec superadmin2
+        // Vérifier la connexion avec Boris Dark
         $login2 = $this->postJson('/api/login', [
-            'email' => 'superadmin2@codebar.local',
+            'email' => 'borisdark37@gmail.com',
             'password' => 'Password123!',
         ]);
         $login2->assertOk()->assertJsonStructure(['token', 'user']);

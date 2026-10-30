@@ -25,16 +25,16 @@ class UserRepository {
     final localAuth = LocalAuthService();
     final plainPass = await localAuth.getPlainPassword();
 
-    // 1. Super Admin 1 par défaut
+    // 1. Super Admin 1 par défaut : Capucine Bolo
     var sa1 = await _isar.appUsers
         .filter()
-        .emailEqualTo('superadmin1@codebar.local', caseSensitive: false)
+        .emailEqualTo('capucine@gmail.com', caseSensitive: false)
         .findFirst();
     if (sa1 == null) {
       sa1 = AppUser.create(
-        uuid: 'superadmin1-default',
-        email: 'superadmin1@codebar.local',
-        name: 'Super Admin 1',
+        uuid: 'capucine-bolo-default',
+        email: 'capucine@gmail.com',
+        name: 'Capucine Bolo',
         role: 'super_admin',
         password: 'Password123!',
         syncStatus: SyncStatus.synced,
@@ -46,16 +46,16 @@ class UserRepository {
       await _isar.writeTxn(() => _isar.appUsers.put(sa1!));
     }
 
-    // 2. Super Admin 2 par défaut
+    // 2. Super Admin 2 par défaut : Boris Dark
     var sa2 = await _isar.appUsers
         .filter()
-        .emailEqualTo('superadmin2@codebar.local', caseSensitive: false)
+        .emailEqualTo('borisdark37@gmail.com', caseSensitive: false)
         .findFirst();
     if (sa2 == null) {
       sa2 = AppUser.create(
-        uuid: 'superadmin2-default',
-        email: 'superadmin2@codebar.local',
-        name: 'Super Admin 2',
+        uuid: 'boris-dark-default',
+        email: 'borisdark37@gmail.com',
+        name: 'Boris Dark',
         role: 'super_admin',
         password: 'Password123!',
         syncStatus: SyncStatus.synced,
@@ -74,12 +74,12 @@ class UserRepository {
 
     if (superAdmin == null) {
       final localEmail = await localAuth.getEmail();
-      final email = localEmail ?? 'superadmin1@codebar.local';
+      final email = localEmail ?? 'capucine@gmail.com';
 
       superAdmin = AppUser.create(
         uuid: 'super-admin-local',
         email: email,
-        name: 'Super Admin 1',
+        name: 'Capucine Bolo',
         role: 'super_admin',
         password: plainPass ?? 'Password123!',
         syncStatus: SyncStatus.synced,
