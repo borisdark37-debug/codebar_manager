@@ -32,6 +32,9 @@ dependencies:
   # Notifications
   flutter_local_notifications: ^17.1.2
 
+  # Supabase Cloud BaaS
+  supabase_flutter: ^2.8.0
+
   # HTTP (préparé pour la Phase 6)
   dio: ^5.4.3
 

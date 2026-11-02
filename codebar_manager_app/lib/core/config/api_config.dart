@@ -2,8 +2,15 @@
 class ApiConfig {
   ApiConfig._();
 
-  /// URL de l'API de production hébergée sur Render Cloud
-  static const String liveBaseUrl = 'https://codebar-manager-backend.onrender.com/api';
+  /// URL de l'instance Supabase Cloud de production
+  static const String supabaseUrl = 'https://mpcpofrzuifoqcqrqlke.supabase.co';
+
+  /// Clé d'API publique / publishable Supabase (Anon Key)
+  static const String supabaseAnonKey =
+      'sb_publishable_LxlHgIMSNTlCF3Q31C8GAA_1aHzFLHW';
+
+  /// URL de l'API REST de production hébergée sur Supabase PostgREST
+  static const String liveBaseUrl = 'https://mpcpofrzuifoqcqrqlke.supabase.co/rest/v1';
 
   static String get baseUrl {
     const envUrl = String.fromEnvironment('API_BASE_URL');
@@ -11,7 +18,6 @@ class ApiConfig {
       return envUrl;
     }
 
-    // Backend Render en production par défaut (accessible depuis Android, iOS, Windows, Mac, Linux et Web)
     return liveBaseUrl;
   }
 

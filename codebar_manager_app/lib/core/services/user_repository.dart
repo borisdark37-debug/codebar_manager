@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:isar/isar.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 import '../database/collections/app_user.dart';
@@ -13,11 +14,26 @@ class UserRepository {
   final Isar _isar;
   final ApiClient _api;
   final SecureStorageService _storage;
+  final SupabaseClient? _injectedClient;
   static const _uuid = Uuid();
 
   static bool offlineMode = false;
 
-  UserRepository(this._isar, this._api, this._storage);
+  UserRepository(
+    this._isar,
+    this._api,
+    this._storage, {
+    SupabaseClient? supabaseClient,
+  }) : _injectedClient = supabaseClient;
+
+  SupabaseClient? get _supabaseClient {
+    if (_injectedClient != null) return _injectedClient;
+    try {
+      return Supabase.instance.client;
+    } catch (_) {
+      return null;
+    }
+  }
 
   /// S'assure que les 2 comptes Super Administrateur par défaut sont bien présents dans la collection AppUser locale.
   Future<AppUser?> ensureSuperAdminExists() async {
@@ -516,6 +532,59 @@ class UserRepository {
     await ensureSuperAdminExists();
     if (offlineMode) {
       return listAll();
+    }
+
+    final client = _supabaseClient;
+    if (client != null) {
+      try {
+        final List<dynamic> profileRows = await client.from('profiles').select();
+        final now = DateTime.now();
+
+        await _isar.writeTxn(() async {
+          for (final item in profileRows) {
+            final pJson = item as Map<String, dynamic>;
+            final email = pJson['email'] as String?;
+            if (email == null) continue;
+
+            final existing = await _isar.appUsers.filter().emailEqualTo(email).findFirst();
+            final name = pJson['full_name'] as String? ?? 'Utilisateur';
+            final role = pJson['role'] as String? ?? 'operator';
+            final isActive = pJson['is_active'] as bool? ?? true;
+            final disabledAtStr = pJson['disabled_at'] as String?;
+            final disabledAt = disabledAtStr != null ? DateTime.tryParse(disabledAtStr) : null;
+            final createdBy = pJson['created_by'] as String?;
+
+            if (existing != null) {
+              final updated = existing.copyWith(
+                name: name,
+                role: role,
+                isActive: isActive,
+                disabledAt: disabledAt,
+                createdBy: createdBy ?? existing.createdBy,
+                syncStatus: SyncStatus.synced,
+                updatedAt: now,
+              );
+              await _isar.appUsers.put(updated);
+            } else {
+              final newUser = AppUser.create(
+                uuid: (pJson['id'] as String?) ?? _uuid.v4(),
+                email: email,
+                name: name,
+                role: role,
+                syncStatus: SyncStatus.synced,
+                createdBy: createdBy,
+                isActive: isActive,
+                disabledAt: disabledAt,
+                createdAt: now,
+                updatedAt: now,
+              );
+              await _isar.appUsers.put(newUser);
+            }
+          }
+        });
+        await ensureSuperAdminExists();
+        return listAll();
+      } catch (_) {}
     }
 
     try {

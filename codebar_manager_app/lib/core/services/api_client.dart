@@ -19,16 +19,22 @@ class ApiClient {
                 connectTimeout: ApiConfig.timeout,
                 receiveTimeout: ApiConfig.timeout,
                 sendTimeout: ApiConfig.timeout,
-                headers: {'Accept': 'application/json'},
+                headers: {
+                  'Accept': 'application/json',
+                  'apikey': ApiConfig.supabaseAnonKey,
+                },
               ),
             ),
         _storage = storage ?? SecureStorageService() {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
+          options.headers['apikey'] = ApiConfig.supabaseAnonKey;
           final token = await _storage.getToken();
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
+          } else {
+            options.headers['Authorization'] = 'Bearer ${ApiConfig.supabaseAnonKey}';
           }
           handler.next(options);
         },
