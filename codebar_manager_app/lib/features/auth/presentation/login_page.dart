@@ -47,6 +47,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     // 1. Tenter la connexion en ligne au serveur central d'abord
     bool serverSuccess = false;
+    String? serverErrorMessage;
     try {
       await authService.login(
         email: email,
@@ -133,7 +134,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         return;
       }
       // Si erreur de connexion (serveur non joignable, hors-ligne), on passe au repli local
-    } catch (_) {
+    } catch (e) {
+      if (e is StateError) {
+        serverErrorMessage = e.message;
+      }
       // Repli local
     }
 
@@ -210,7 +214,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
       if (!serverSuccess) {
         setState(() {
-          _error = 'Identifiants introuvables sur le serveur et en local. Vérifiez vos identifiants.';
+          _error = serverErrorMessage ??
+              'Identifiants introuvables sur le serveur et en local. Vérifiez vos identifiants.';
         });
       }
     } catch (e) {

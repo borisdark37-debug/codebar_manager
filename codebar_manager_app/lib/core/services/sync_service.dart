@@ -144,7 +144,14 @@ class SyncService {
       try {
         await client.from('products').select('id').limit(1);
         return true;
-      } catch (_) {}
+      } catch (_) {
+        try {
+          final res = await _api.get<Map<String, dynamic>>(
+            '${ApiConfig.supabaseUrl}/auth/v1/health',
+          );
+          return res.statusCode == 200;
+        } catch (_) {}
+      }
     }
     try {
       final res = await _api.get<Map<String, dynamic>>('/health');
@@ -560,115 +567,119 @@ class SyncService {
 
       final client = _supabaseClient;
       if (client != null) {
-        final List<dynamic> rows = await client
-            .from('products')
-            .select()
-            .order('updated_at', ascending: true);
+        try {
+          final List<dynamic> rows = await client
+              .from('products')
+              .select()
+              .order('updated_at', ascending: true);
 
-        int applied = 0;
-        int maxPulledNumber = 0;
-        final now = DateTime.now();
+          int applied = 0;
+          int maxPulledNumber = 0;
+          final now = DateTime.now();
 
-        await _isar.writeTxn(() async {
-          for (final raw in rows) {
-            final json = raw as Map<String, dynamic>;
-            final uuid = (json['uuid'] ?? json['id']) as String;
-            final internalCode = (json['internal_code'] as String?) ?? '';
-            final name = (json['name'] as String?) ?? '';
-            final format = (json['format'] ?? json['category'] ?? '') as String;
-            final containment = (json['containment'] ?? '') as String;
-            final price = (json['price'] as num?)?.toDouble() ?? 0.0;
-            final quantity = (json['quantity'] ?? json['stock'] as num?)?.toInt() ?? 0;
-            final imageBase64 = json['image_base64'] as String?;
-            final createdAt = json['created_at'] != null ? DateTime.parse(json['created_at'] as String).toLocal() : now;
-            final updatedAt = json['updated_at'] != null ? DateTime.parse(json['updated_at'] as String).toLocal() : now;
-            final deletedAt = json['deleted_at'] != null ? DateTime.parse(json['deleted_at'] as String).toLocal() : null;
+          await _isar.writeTxn(() async {
+            for (final raw in rows) {
+              final json = raw as Map<String, dynamic>;
+              final uuid = (json['uuid'] ?? json['id']) as String;
+              final internalCode = (json['internal_code'] as String?) ?? '';
+              final name = (json['name'] as String?) ?? '';
+              final format = (json['format'] ?? json['category'] ?? '') as String;
+              final containment = (json['containment'] ?? '') as String;
+              final price = (json['price'] as num?)?.toDouble() ?? 0.0;
+              final quantity = (json['quantity'] ?? json['stock'] as num?)?.toInt() ?? 0;
+              final imageBase64 = json['image_base64'] as String?;
+              final createdAt = json['created_at'] != null ? DateTime.parse(json['created_at'] as String).toLocal() : now;
+              final updatedAt = json['updated_at'] != null ? DateTime.parse(json['updated_at'] as String).toLocal() : now;
+              final deletedAt = json['deleted_at'] != null ? DateTime.parse(json['deleted_at'] as String).toLocal() : null;
 
-            if (internalCode.startsWith('CAP-')) {
-              final numPart = int.tryParse(internalCode.substring(4));
-              if (numPart != null && numPart > maxPulledNumber) {
-                maxPulledNumber = numPart;
+              if (internalCode.startsWith('CAP-')) {
+                final numPart = int.tryParse(internalCode.substring(4));
+                if (numPart != null && numPart > maxPulledNumber) {
+                  maxPulledNumber = numPart;
+                }
+              }
+
+              final existing = await _isar.products.filter().uuidEqualTo(uuid).findFirst();
+              if (existing == null || existing.syncStatus != SyncStatus.pending) {
+                final p = Product.create(
+                  uuid: uuid,
+                  internalCode: internalCode,
+                  name: name,
+                  format: format,
+                  containment: containment,
+                  price: price,
+                  quantity: quantity,
+                  imageBase64: imageBase64,
+                  createdAt: createdAt,
+                  updatedAt: updatedAt,
+                  syncStatus: SyncStatus.synced,
+                  deletedAt: deletedAt,
+                );
+                await _isar.products.put(p);
+                applied++;
               }
             }
 
-            final existing = await _isar.products.filter().uuidEqualTo(uuid).findFirst();
-            if (existing == null || existing.syncStatus != SyncStatus.pending) {
-              final p = Product.create(
-                uuid: uuid,
-                internalCode: internalCode,
-                name: name,
-                format: format,
-                containment: containment,
-                price: price,
-                quantity: quantity,
-                imageBase64: imageBase64,
-                createdAt: createdAt,
-                updatedAt: updatedAt,
-                syncStatus: SyncStatus.synced,
-                deletedAt: deletedAt,
-              );
-              await _isar.products.put(p);
-              applied++;
-            }
-          }
-
-          if (maxPulledNumber > 0) {
-            var seq = await _isar.appSequences.get(0);
-            seq ??= AppSequence()..id = 0..lastProductNumber = 0..updatedAt = DateTime.now();
-            if (maxPulledNumber > seq.lastProductNumber) {
-              seq.lastProductNumber = maxPulledNumber;
-              seq.updatedAt = DateTime.now();
-              await _isar.appSequences.put(seq);
-            }
-          }
-        });
-
-        try {
-          final List<dynamic> profileRows = await client.from('profiles').select();
-          await _isar.writeTxn(() async {
-            for (final pRaw in profileRows) {
-              final pJson = pRaw as Map<String, dynamic>;
-              final email = pJson['email'] as String?;
-              if (email == null) continue;
-              final existingUser = await _isar.appUsers.filter().emailEqualTo(email).findFirst();
-              final role = (pJson['role'] as String?) ?? 'operator';
-              final name = (pJson['full_name'] as String?) ?? email;
-              final isActive = (pJson['is_active'] as bool?) ?? true;
-              final disabledAt = pJson['disabled_at'] != null ? DateTime.tryParse(pJson['disabled_at']) : null;
-              final createdBy = pJson['created_by'] as String?;
-
-              if (existingUser != null) {
-                if (existingUser.syncStatus != SyncStatus.pending) {
-                  await _isar.appUsers.put(existingUser.copyWith(
-                    name: name,
-                    role: role,
-                    isActive: isActive,
-                    disabledAt: disabledAt,
-                    createdBy: createdBy ?? existingUser.createdBy,
-                    syncStatus: SyncStatus.synced,
-                    updatedAt: now,
-                  ));
-                }
-              } else {
-                await _isar.appUsers.put(AppUser.create(
-                  uuid: (pJson['id'] as String?) ?? _uuid.v4(),
-                  email: email,
-                  name: name,
-                  role: role,
-                  syncStatus: SyncStatus.synced,
-                  createdBy: createdBy,
-                  isActive: isActive,
-                  disabledAt: disabledAt,
-                  createdAt: now,
-                  updatedAt: now,
-                ));
+            if (maxPulledNumber > 0) {
+              var seq = await _isar.appSequences.get(0);
+              seq ??= AppSequence()..id = 0..lastProductNumber = 0..updatedAt = DateTime.now();
+              if (maxPulledNumber > seq.lastProductNumber) {
+                seq.lastProductNumber = maxPulledNumber;
+                seq.updatedAt = DateTime.now();
+                await _isar.appSequences.put(seq);
               }
             }
           });
-        } catch (_) {}
 
-        await _recordLastSync(now);
-        return SyncResult(pushed: 0, synced: applied, serverTime: now);
+          try {
+            final List<dynamic> profileRows = await client.from('profiles').select();
+            await _isar.writeTxn(() async {
+              for (final pRaw in profileRows) {
+                final pJson = pRaw as Map<String, dynamic>;
+                final email = pJson['email'] as String?;
+                if (email == null) continue;
+                final existingUser = await _isar.appUsers.filter().emailEqualTo(email).findFirst();
+                final role = (pJson['role'] as String?) ?? 'operator';
+                final name = (pJson['full_name'] as String?) ?? email;
+                final isActive = (pJson['is_active'] as bool?) ?? true;
+                final disabledAt = pJson['disabled_at'] != null ? DateTime.tryParse(pJson['disabled_at']) : null;
+                final createdBy = pJson['created_by'] as String?;
+
+                if (existingUser != null) {
+                  if (existingUser.syncStatus != SyncStatus.pending) {
+                    await _isar.appUsers.put(existingUser.copyWith(
+                      name: name,
+                      role: role,
+                      isActive: isActive,
+                      disabledAt: disabledAt,
+                      createdBy: createdBy ?? existingUser.createdBy,
+                      syncStatus: SyncStatus.synced,
+                      updatedAt: now,
+                    ));
+                  }
+                } else {
+                  await _isar.appUsers.put(AppUser.create(
+                    uuid: (pJson['id'] as String?) ?? _uuid.v4(),
+                    email: email,
+                    name: name,
+                    role: role,
+                    syncStatus: SyncStatus.synced,
+                    createdBy: createdBy,
+                    isActive: isActive,
+                    disabledAt: disabledAt,
+                    createdAt: now,
+                    updatedAt: now,
+                  ));
+                }
+              }
+            });
+          } catch (_) {}
+
+          await _recordLastSync(now);
+          return SyncResult(pushed: 0, synced: applied, serverTime: now);
+        } catch (_) {
+          // Repli automatique si Supabase PostgREST tables pas encore disponibles
+        }
       }
 
       final lastSync = await getLastSyncAt();
